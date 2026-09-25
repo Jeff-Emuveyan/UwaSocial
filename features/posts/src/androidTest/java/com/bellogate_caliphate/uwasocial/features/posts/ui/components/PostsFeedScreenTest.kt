@@ -1,5 +1,6 @@
 package com.bellogate_caliphate.uwasocial.features.posts.ui.components
 
+import androidx.compose.runtime.remember
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasScrollAction
 import androidx.compose.ui.test.hasText
@@ -8,12 +9,15 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performScrollToNode
 import androidx.paging.PagingData
 import androidx.paging.compose.collectAsLazyPagingItems
+import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.bellogate_caliphate.uwasocial.domain.model.FeedPost
 import com.bellogate_caliphate.uwasocial.domain.model.User
 import kotlinx.coroutines.flow.flowOf
 import org.junit.Rule
 import org.junit.Test
+import org.junit.runner.RunWith
 
+@RunWith(AndroidJUnit4::class)
 class PostsFeedScreenTest {
 
     @get:Rule
@@ -36,14 +40,22 @@ class PostsFeedScreenTest {
             )
         }
 
+        composeTestRule.mainClock.autoAdvance = false
+
         composeTestRule.setContent {
-            val pagingItems = flowOf(PagingData.from(posts)).collectAsLazyPagingItems()
+            val postsFlow = remember { flowOf(PagingData.from(posts)) }
+            val pagingItems = postsFlow.collectAsLazyPagingItems()
             com.bellogate_caliphate.uwasocial.features.posts.ui.screen.PostsFeedScreenContent(
                 pagingItems = pagingItems,
                 isOffline = false,
                 onLikeClick = {}
             )
         }
+
+        repeat(10) {
+            composeTestRule.mainClock.advanceTimeByFrame()
+        }
+        composeTestRule.mainClock.autoAdvance = true
 
         composeTestRule
             .onNodeWithText("Post body content number 1", substring = true)
