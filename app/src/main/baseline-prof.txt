@@ -1,0 +1,40 @@
+# Baseline Profile Rules for UwaSocial
+
+# Application Startup & MainActivity
+Lcom/bellogate_caliphate/uwasocial/UwaSocialApp;
+Lcom/bellogate_caliphate/uwasocial/MainActivity;
+HSPLcom/bellogate_caliphate/uwasocial/MainActivity;->onCreate(Landroid/os/Bundle;)V
+
+# Features: Posts UI & Composables
+Lcom/bellogate_caliphate/uwasocial/features/posts/ui/screen/PostsFeedScreenKt;
+HSPLcom/bellogate_caliphate/uwasocial/features/posts/ui/screen/PostsFeedScreenKt;->PostsFeedScreen(Landroidx/compose/ui/Modifier;Lcom/bellogate_caliphate/uwasocial/features/posts/ui/viewmodel/PostsViewModel;Landroidx/compose/runtime/Composer;II)V
+HSPLcom/bellogate_caliphate/uwasocial/features/posts/ui/screen/PostsFeedScreenKt;->PostsFeedScreenContent(Landroidx/paging/compose/LazyPagingItems;ZLkotlin/jvm/functions/Function1;Landroidx/compose/ui/Modifier;Landroidx/compose/runtime/Composer;II)V
+
+# PostCard & Components
+Lcom/bellogate_caliphate/uwasocial/features/posts/ui/components/PostCardKt;
+HSPLcom/bellogate_caliphate/uwasocial/features/posts/ui/components/PostCardKt;->PostCard(Lcom/bellogate_caliphate/uwasocial/domain/model/FeedPost;Lkotlin/jvm/functions/Function1;Landroidx/compose/ui/Modifier;Landroidx/compose/runtime/Composer;II)V
+Lcom/bellogate_caliphate/uwasocial/features/posts/ui/components/PostHeaderKt;
+Lcom/bellogate_caliphate/uwasocial/features/posts/ui/components/PostMediaKt;
+Lcom/bellogate_caliphate/uwasocial/features/posts/ui/components/PostActionsKt;
+Lcom/bellogate_caliphate/uwasocial/features/posts/ui/components/PostAvatarKt;
+
+# Domain UseCases
+Lcom/bellogate_caliphate/uwasocial/domain/usecase/getfeedposts/GetFeedPostsUseCaseImpl;
+HSPLcom/bellogate_caliphate/uwasocial/domain/usecase/getfeedposts/GetFeedPostsUseCaseImpl;->invoke()Lkotlinx/coroutines/flow/Flow;
+Lcom/bellogate_caliphate/uwasocial/domain/usecase/togglelikepost/ToggleLikePostUseCaseImpl;
+
+# Data Layer: Room DB & Paging Mediator
+Lcom/bellogate_caliphate/uwasocial/data/posts/repository/PostRepositoryImpl;
+Lcom/bellogate_caliphate/uwasocial/data/posts/mediator/PostRemoteMediator;
+Lcom/bellogate_caliphate/uwasocial/data/posts/local/AppDatabase;
+Lcom/bellogate_caliphate/uwasocial/data/user/repository/UserRepositoryImpl;
+
+# Jetpack Compose Runtime & LazyColumn Scrolling
+Landroidx/compose/foundation/lazy/LazyColumnKt;
+Landroidx/compose/foundation/lazy/LazyListState;
+Landroidx/compose/runtime/ComposerImpl;
+Landroidx/compose/ui/node/LayoutNode;
+
+# Coil Image Loading & Caching
+Lcoil/compose/AsyncImageKt;
+Lcoil/ImageLoader;
