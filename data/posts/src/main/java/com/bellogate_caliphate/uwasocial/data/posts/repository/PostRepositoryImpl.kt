@@ -14,6 +14,7 @@ import com.bellogate_caliphate.uwasocial.data.user.local.UserEntity
 import com.bellogate_caliphate.uwasocial.data.user.repository.UserRepository
 import com.bellogate_caliphate.uwasocial.domain.model.FeedPost
 import com.bellogate_caliphate.uwasocial.domain.model.User
+import com.bellogate_caliphate.uwasocial.domain.repository.PostRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import javax.inject.Inject

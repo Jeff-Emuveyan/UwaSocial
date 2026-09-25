@@ -6,9 +6,9 @@ import com.bellogate_caliphate.uwasocial.data.posts.local.AppDatabase
 import com.bellogate_caliphate.uwasocial.data.posts.local.PostDao
 import com.bellogate_caliphate.uwasocial.data.posts.local.RemoteKeyDao
 import com.bellogate_caliphate.uwasocial.data.posts.remote.PostApiService
-import com.bellogate_caliphate.uwasocial.data.posts.repository.PostRepository
 import com.bellogate_caliphate.uwasocial.data.posts.repository.PostRepositoryImpl
 import com.bellogate_caliphate.uwasocial.data.user.local.UserDao
+import com.bellogate_caliphate.uwasocial.domain.repository.PostRepository
 import dagger.Binds
 import dagger.Module
 import dagger.Provides

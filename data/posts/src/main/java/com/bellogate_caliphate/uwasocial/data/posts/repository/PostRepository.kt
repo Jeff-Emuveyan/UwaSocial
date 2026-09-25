@@ -1,10 +1,6 @@
 package com.bellogate_caliphate.uwasocial.data.posts.repository
 
-import androidx.paging.PagingData
-import com.bellogate_caliphate.uwasocial.domain.model.FeedPost
-import kotlinx.coroutines.flow.Flow
+import com.bellogate_caliphate.uwasocial.domain.repository.PostRepository as DomainPostRepository
 
-interface PostRepository {
-    fun getFeedPosts(): Flow<PagingData<FeedPost>>
-    suspend fun toggleLike(postId: Long)
-}
+@Deprecated("Use com.bellogate_caliphate.uwasocial.domain.repository.PostRepository instead")
+interface PostRepository : DomainPostRepository
