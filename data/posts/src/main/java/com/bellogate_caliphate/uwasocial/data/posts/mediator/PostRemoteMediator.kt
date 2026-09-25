@@ -26,9 +26,24 @@ class PostRemoteMediator(
         state: PagingState<Int, PostWithUserLocal>
     ): MediatorResult {
         return try {
-            val skip = calculateSkip(loadType, state) ?: return MediatorResult.Success(
-                endOfPaginationReached = true
-            )
+            val skip = when (loadType) {
+                LoadType.REFRESH -> {
+                    val remoteKey = getRemoteKeyClosestToPosition(state)
+                    remoteKey?.nextSkip?.minus(state.config.pageSize) ?: 0
+                }
+                LoadType.PREPEND -> {
+                    val remoteKey = getRemoteKeyForFirstItem(state)
+                    val prevSkip = remoteKey?.prevSkip
+                        ?: return MediatorResult.Success(endOfPaginationReached = remoteKey != null)
+                    prevSkip
+                }
+                LoadType.APPEND -> {
+                    val remoteKey = getRemoteKeyForLastItem(state)
+                    val nextSkip = remoteKey?.nextSkip
+                        ?: return MediatorResult.Success(endOfPaginationReached = remoteKey != null)
+                    nextSkip
+                }
+            }
 
             val limit = state.config.pageSize
             val response = postApiService.getPosts(limit = limit, skip = skip)
@@ -42,31 +57,30 @@ class PostRemoteMediator(
         }
     }
 
-    private suspend fun calculateSkip(
-        loadType: LoadType,
+    private suspend fun getRemoteKeyForLastItem(
         state: PagingState<Int, PostWithUserLocal>
-    ): Int? {
-        return when (loadType) {
-            LoadType.REFRESH -> 0
-            LoadType.PREPEND -> getSkipForPrepend(state)
-            LoadType.APPEND -> getSkipForAppend(state)
+    ): RemoteKeyEntity? {
+        return state.pages.lastOrNull { it.data.isNotEmpty() }?.data?.lastOrNull()?.let { post ->
+            database.remoteKeyDao().getRemoteKeyForPostId(post.post.id)
         }
     }
 
-    private suspend fun getSkipForPrepend(
+    private suspend fun getRemoteKeyForFirstItem(
         state: PagingState<Int, PostWithUserLocal>
-    ): Int? {
-        val firstItem = state.firstItemOrNull() ?: return null
-        val remoteKey = database.remoteKeyDao().getRemoteKeyForPostId(firstItem.post.id)
-        return remoteKey?.prevSkip
+    ): RemoteKeyEntity? {
+        return state.pages.firstOrNull { it.data.isNotEmpty() }?.data?.firstOrNull()?.let { post ->
+            database.remoteKeyDao().getRemoteKeyForPostId(post.post.id)
+        }
     }
 
-    private suspend fun getSkipForAppend(
+    private suspend fun getRemoteKeyClosestToPosition(
         state: PagingState<Int, PostWithUserLocal>
-    ): Int? {
-        val lastItem = state.lastItemOrNull() ?: return null
-        val remoteKey = database.remoteKeyDao().getRemoteKeyForPostId(lastItem.post.id)
-        return remoteKey?.nextSkip
+    ): RemoteKeyEntity? {
+        return state.anchorPosition?.let { position ->
+            state.closestItemToPosition(position)?.post?.id?.let { postId ->
+                database.remoteKeyDao().getRemoteKeyForPostId(postId)
+            }
+        }
     }
 
     private fun evaluateEndOfPagination(response: PostResponseDto): Boolean {
