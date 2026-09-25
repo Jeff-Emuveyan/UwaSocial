@@ -1,18 +1,19 @@
 package com.bellogate_caliphate.uwasocial.features.posts.ui.components
 
-import androidx.compose.runtime.remember
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasScrollAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performScrollToNode
+import androidx.paging.LoadState
+import androidx.paging.LoadStates
 import androidx.paging.PagingData
 import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.bellogate_caliphate.uwasocial.domain.model.FeedPost
 import com.bellogate_caliphate.uwasocial.domain.model.User
-import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.MutableStateFlow
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -40,22 +41,25 @@ class PostsFeedScreenTest {
             )
         }
 
-        composeTestRule.mainClock.autoAdvance = false
+        val pagingDataFlow = MutableStateFlow(
+            PagingData.from(
+                data = posts,
+                sourceLoadStates = LoadStates(
+                    refresh = LoadState.NotLoading(endOfPaginationReached = false),
+                    prepend = LoadState.NotLoading(endOfPaginationReached = true),
+                    append = LoadState.NotLoading(endOfPaginationReached = false)
+                )
+            )
+        )
 
         composeTestRule.setContent {
-            val postsFlow = remember { flowOf(PagingData.from(posts)) }
-            val pagingItems = postsFlow.collectAsLazyPagingItems()
+            val pagingItems = pagingDataFlow.collectAsLazyPagingItems()
             com.bellogate_caliphate.uwasocial.features.posts.ui.screen.PostsFeedScreenContent(
                 pagingItems = pagingItems,
                 isOffline = false,
                 onLikeClick = {}
             )
         }
-
-        repeat(10) {
-            composeTestRule.mainClock.advanceTimeByFrame()
-        }
-        composeTestRule.mainClock.autoAdvance = true
 
         composeTestRule
             .onNodeWithText("Post body content number 1", substring = true)
