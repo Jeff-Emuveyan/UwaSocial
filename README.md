@@ -1,6 +1,6 @@
 # UwaSocial — Modular Social Media App
 
-An Android social feed application built following **Google's Recommended Architecture**, modern Jetpack Compose UI, offline caching, and Paging 3 integration.
+An Android social feed application built following [**Google's Recommended Architecture**](https://developer.android.com/topic/architecture), modern Jetpack Compose UI, offline caching, and Paging 3 integration.
 
 <p align="center">
   <img src="./art/screenshot1.png" width="45%" alt="UwaSocial Feed Screenshot 1">
