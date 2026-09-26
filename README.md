@@ -1,6 +1,6 @@
-# UwaSocial - A Social Media app
+# UwaSocial - Social Feed App
 
-An Android social feed application built following [**Google's Recommended Architecture**](https://developer.android.com/topic/architecture), modern Jetpack Compose UI, offline caching, and Paging 3 integration.
+An Android social media feed app built with Jetpack Compose, Room offline caching, Paging 3, and Clean Architecture.
 
 <p align="center">
   <img src="app/art/screenshot1.png" width="45%" alt="UwaSocial Feed Screenshot 1">
@@ -10,9 +10,15 @@ An Android social feed application built following [**Google's Recommended Archi
 
 ---
 
-## 🏛️ Architecture & Module Structure
+## ⚙️ How It Works (Data & Offline Strategy)
 
-The project follows Google's recommended architecture principles with strict data encapsulation and multi-module separation:
+* **Data & Network Flow**: When the app launches, `PostsViewModel` observes a `PagingData` stream provided by `PostRepository`. Network calls are handled via `Retrofit` and `PostApiService`, fetching paginated post batches from the remote API.
+* **Offline Caching & SSOT**: Instead of passing network responses directly to the UI, the app uses Room with `RemoteMediator` as the **Single Source of Truth (SSOT)**. Remote items and `RemoteKeys` are persisted to SQLite. When the device is offline, `Paging 3` seamlessly serves cached posts directly from Room, ensuring uninterrupted scrolling and offline availability.
+* **Data Normalization**: Post metadata (`PostEntity`) and author profiles (`UserEntity`) are normalized in local storage and joined via Room `@Transaction` queries (`PostWithUserLocal`), preventing duplicate user records and ensuring consistent author profiles across the feed.
+
+---
+
+## 🏛️ Architecture & Module Structure
 
 ```
                                ┌─────────────────────────┐
@@ -36,62 +42,18 @@ The project follows Google's recommended architecture principles with strict dat
                                └─────────────────────────┘
 ```
 
-### Modules Description
-* **`:app`**: Application entry point, dependency injection initialization, main activity container, and baseline profile rules.
-* **`:features:posts`**: Presentation and UI layer for rendering feed posts, loading indicators, and handling screen user interactions.
-* **`:domain`**: Business logic layer containing use cases and domain models for posts and users.
-* **`:data:posts`**: Data layer handling post network requests, database storage, and offline caching.
-* **`:data:user`**: Data layer handling user profile fetching, database storage, and caching.
-* **`:core`**: Shared utilities, network connectivity tracking, coroutine dispatchers, and common UI helpers.
-* **`:benchmark`**: Performance macrobenchmarks for measuring startup time, frame timing, and generating baseline profiles.
+* **`:app`**: Application entry point, Hilt DI setup, and baseline profile rules.
+* **`:features:posts`**: Compose UI screens, components, and `PostsViewModel`.
+* **`:domain`**: Business logic use cases (`GetFeedPostsUseCase`, `ToggleLikePostUseCase`).
+* **`:data:posts` & `:data:user`**: Room DB, DAO, Retrofit API services, and `RemoteMediator`.
+* **`:core`**: Common utilities, network observers, and shared UI extensions.
+* **`:benchmark`**: Macrobenchmarks, Microbenchmarks, and Baseline Profile generator.
 
 ---
 
-## ⚡ Baseline Profile & Performance Optimization
+## 🧪 Testing & Benchmarking Overview
 
-A **Baseline Profile** is a set of Ahead-Of-Time (AOT) compilation rules for the Android Runtime (ART) that pre-compiles critical code paths during app installation, eliminating initial JIT compilation overhead and runtime execution delays.
-
-I added Baseline Profiles to this project to eliminate first-scroll jank and guarantee a butter-smooth **60fps / 120fps scrolling** experience across the feed:
-
-- **Baseline Profile Rules ([`baseline-prof.txt`](app/src/main/baseline-prof.txt))**: Pre-compiles critical execution paths including [`PostsFeedScreen`](features/posts/src/main/java/com/bellogate_caliphate/uwasocial/features/posts/ui/screen/PostsFeedScreen.kt), [`PostCard`](features/posts/src/main/java/com/bellogate_caliphate/uwasocial/features/posts/ui/components/PostCard.kt), Coil image decoding, Room database transactions, and Compose `LazyColumn` item measurement.
-- **Profile Generator ([`BaselineProfileGenerator.kt`](benchmark/src/main/java/com/bellogate_caliphate/uwasocial/benchmark/BaselineProfileGenerator.kt))**: Automates profile collection using Jetpack `BaselineProfileRule` in the `:benchmark` module.
-
----
-
-## 🧪 Unit Testing & UI Testing Strategy
-
-I implemented unit and Compose UI tests to verify business logic, state transitions, and component rendering in isolation:
-
-- **Testing Libraries Used**: `MockK` for mock creation, `kotlinx-coroutines-test` for coroutines, and `Turbine` for reactive `Flow` testing.
-- **Unit Tests**:
-  - [`UserRepositoryImplTest`](data/user/src/test/java/com/bellogate_caliphate/uwasocial/data/user/repository/UserRepositoryImplTest.kt): Verifies cached user retrieval and deduplicated remote fetching.
-  - [`PostRepositoryImplTest`](data/posts/src/test/java/com/bellogate_caliphate/uwasocial/data/posts/repository/PostRepositoryImplTest.kt): Verifies domain mapping (`mapToDomainModel`) and like toggle functionality.
-  - [`PostsViewModelTest`](features/posts/src/test/java/com/bellogate_caliphate/uwasocial/features/posts/ui/viewmodel/PostsViewModelTest.kt): Verifies `PostsViewModel` state management and like action dispatch.
-  - [`GetFeedPostsUseCaseTest`](domain/src/test/java/com/bellogate_caliphate/uwasocial/domain/usecase/GetFeedPostsUseCaseTest.kt): Verifies UseCase delegation to repository flow.
-  - [`ToggleLikePostUseCaseTest`](domain/src/test/java/com/bellogate_caliphate/uwasocial/domain/usecase/ToggleLikePostUseCaseTest.kt): Verifies UseCase delegation for post likes.
-- **Compose UI Tests**:
-  - [`PostCardTest`](features/posts/src/androidTest/java/com/bellogate_caliphate/uwasocial/features/posts/ui/components/PostCardTest.kt): Validates UI node rendering of user name, post body, and like count.
-  - [`PostsFeedScreenTest`](features/posts/src/androidTest/java/com/bellogate_caliphate/uwasocial/features/posts/ui/components/PostsFeedScreenTest.kt): Validates full feed screen rendering and scroll behavior.
-
----
-
-## 🤖 UIAutomation End-to-End Testing
-
-**UIAutomation** is an Android testing framework that interacts directly with device UI nodes at the system level, simulating real user actions across application processes.
-
-I implemented UIAutomation end-to-end tests to validate real device interactions and complete app navigation flows from launch through feed interaction:
-
-- [`FeedUiAutomationTest`](app/src/androidTest/java/com/bellogate_caliphate/uwasocial/FeedUiAutomationTest.kt): Verifies launching the application, fetching remote feed posts, scrolling through items, and interacting with post components on-device.
-
----
-
-## 📊 Macrobenchmark & Microbenchmark Testing
-
-- **Macrobenchmark** measures high-level, end-to-end performance metrics on real devices, such as app startup time (COLD/WARM/HOT) and UI frame rendering/jank during scrolling.
-- **Microbenchmark** isolates and measures CPU-bound algorithms and utility functions in nanosecond precision to prevent performance regressions.
-
-I set up performance benchmarks in the `:benchmark` module to quantitatively measure and track performance metrics:
-
-- [`StartupBenchmark`](benchmark/src/main/java/com/bellogate_caliphate/uwasocial/benchmark/StartupBenchmark.kt): Measures COLD, WARM, and HOT application startup timing.
-- [`FrameTimingBenchmark`](benchmark/src/main/java/com/bellogate_caliphate/uwasocial/benchmark/FrameTimingBenchmark.kt): Measures frame rendering duration and jank count during fast list scrolling.
-- [`TimeUtilsMicrobenchmark`](benchmark/src/main/java/com/bellogate_caliphate/uwasocial/benchmark/TimeUtilsMicrobenchmark.kt): Measures execution time and CPU efficiency of relative timestamp calculations.
+- **Unit Tests**: [`UserRepositoryImplTest`](data/user/src/test/java/com/bellogate_caliphate/uwasocial/data/user/repository/UserRepositoryImplTest.kt), [`PostRepositoryImplTest`](data/posts/src/test/java/com/bellogate_caliphate/uwasocial/data/posts/repository/PostRepositoryImplTest.kt), [`PostsViewModelTest`](features/posts/src/test/java/com/bellogate_caliphate/uwasocial/features/posts/ui/viewmodel/PostsViewModelTest.kt).
+- **Compose UI Tests**: [`PostCardTest`](features/posts/src/androidTest/java/com/bellogate_caliphate/uwasocial/features/posts/ui/components/PostCardTest.kt), [`PostsFeedScreenTest`](features/posts/src/androidTest/java/com/bellogate_caliphate/uwasocial/features/posts/ui/components/PostsFeedScreenTest.kt).
+- **UIAutomation E2E**: [`FeedUiAutomationTest`](app/src/androidTest/java/com/bellogate_caliphate/uwasocial/FeedUiAutomationTest.kt) for on-device navigation verification.
+- **Benchmarks**: [`StartupBenchmark`](benchmark/src/main/java/com/bellogate_caliphate/uwasocial/benchmark/StartupBenchmark.kt), [`FrameTimingBenchmark`](benchmark/src/main/java/com/bellogate_caliphate/uwasocial/benchmark/FrameTimingBenchmark.kt), [`TimeUtilsMicrobenchmark`](benchmark/src/main/java/com/bellogate_caliphate/uwasocial/benchmark/TimeUtilsMicrobenchmark.kt).
